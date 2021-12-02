@@ -8,7 +8,7 @@
     },
     "scripts": {
       "test": "jest",
-      "compile": "rm -r our && tsc -p tsconfig.json"
+      "compile": "rm -r out && tsc -p tsconfig.json"
     }
   }
   
