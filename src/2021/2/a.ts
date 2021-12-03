@@ -1,5 +1,5 @@
 import fs from 'fs';
-const movements = fs.readFileSync('./src/2021/2/input.txt', 'utf8').split('\n');
+const movements = fs.readFileSync('./src/2021/2/input.txt', 'utf8').split(/\r?\n/);
 let x = 0;
 let y = 0;
 for (const entry of movements) {

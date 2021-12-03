@@ -1,5 +1,5 @@
 import fs from 'fs';
-const input = fs.readFileSync('./src/2015/5/input.txt', 'utf8').split('\n');
+const input = fs.readFileSync('./src/2015/5/input.txt', 'utf8').split(/\r?\n/);
 let nice = 0;
 
 //not too proud of this one

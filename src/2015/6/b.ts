@@ -1,5 +1,5 @@
 import fs from 'fs';
-const input = fs.readFileSync('./src/2015/6/input.txt', 'utf8').split('\n');
+const input = fs.readFileSync('./src/2015/6/input.txt', 'utf8').split(/\r?\n/);
 
 //setup grid
 const grid = new Uint8Array(1000000).fill(0);
@@ -30,7 +30,7 @@ for (const line of input) {
             transformationFunc = n => Math.max(0, n - 1);
             break;
         case "toggle":
-            transformationFunc = n => n +2;
+            transformationFunc = n => n + 2;
             break;
     }
     const [p0x, p0y] = p0.split(',');

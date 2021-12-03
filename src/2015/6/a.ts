@@ -1,5 +1,5 @@
 import fs from 'fs';
-const input = fs.readFileSync('./src/2015/6/input.txt', 'utf8').split('\n');
+const input = fs.readFileSync('./src/2015/6/input.txt', 'utf8').split(/\r?\n/);
 
 //setup grid
 const grid = new Uint8Array(1000000).fill(0);

@@ -1,5 +1,5 @@
 import fs from 'fs';
-const input = fs.readFileSync('./src/2021/3/input.txt', 'utf8').split('\n');
+const input = fs.readFileSync('./src/2021/3/input.txt', 'utf8').split(/\r?\n/);
 let workingO = [...input];
 let workingC = [...input];
 

@@ -1,5 +1,5 @@
 import fs from 'fs';
-const input = fs.readFileSync('./src/2021/3/input.txt', 'utf8').split('\n');
+const input = fs.readFileSync('./src/2021/3/input.txt', 'utf8').split(/\r?\n/);
 const count1 = new Array(input[0].length).fill(0);
 const count0 = new Array(input[0].length).fill(0);
 for (const str of input) {
