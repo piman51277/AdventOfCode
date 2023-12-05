@@ -1,3 +1,5 @@
+// Part 2 but CUDA and its a complete brute force search
+// this took ~800ms... this is insane
 
 #include <iostream>
 #include <string>
@@ -5,23 +7,6 @@
 #include <vector>
 
 using namespace std;
-
-/**
- * function getLocationofSeed(seed) {
-  let loc = seed
-  for (let i = 0; i < maps.length; i++) {
-    for (let assignment of maps[i]) {
-      const [to, from, range] = assignment
-
-      if (loc >= from && loc <= from + range - 1) {
-        loc = to + (loc - from)
-        break;
-      }
-    }
-  }
-  return loc
-}
-*/
 
 __global__ void findSeedLocKernel(int64_t seedStart, int64_t range, int64_t **maps, int *maplengths, int64_t *outArr)
 {
@@ -138,6 +123,15 @@ int main()
     // free the memory
     cudaFree(outArr);
   }
+
+  // free the memory
+  for (int i = 0; i < numMaps; i++)
+  {
+    cudaFree(maps[i]);
+  }
+
+  cudaFree(maps);
+  cudaFree(mapLengths);
 
   cout << totMin << endl;
 }
