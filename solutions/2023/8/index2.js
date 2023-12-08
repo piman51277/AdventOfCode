@@ -17,9 +17,6 @@ const tripletIDs = Object.keys(triplets)
 //get all the ones that end in "A"
 const startingPositions = tripletIDs.filter(id => id.endsWith("A"))
 
-//get all the ones that end in "Z"
-const endingPositions = tripletIDs.filter(id => id.endsWith("Z"))
-
 
 let positions = startingPositions
 let firstZ = Array.from(startingPositions, pos => 0)
@@ -82,8 +79,5 @@ function lcm(a, b) {
 //get lcm of all the cycles
 let totalCycle = cycle.reduce(lcm)
 
-console.log(`Plug this into wolfram:`)
-console.log(`(${6 * steps} + 6k) mod ${totalCycle} = 0`)
-
-console.log(`Add ${steps} to the value of k you get`)
+console.log(totalCycle)
 
