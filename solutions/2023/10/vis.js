@@ -1,4 +1,3 @@
-const { on } = require("events");
 const fs = require("fs");
 const input = fs.readFileSync("input.txt", "utf8").split("\n");
 input.pop()
@@ -28,6 +27,7 @@ const directionMatrix = {
   ".": [0, 0, 0, 0],
   "S": [1, 1, 1, 1]
 }
+
 
 function getNeighborsCoords(x, y) {
   //is the current cell S?
@@ -84,7 +84,6 @@ const startX = grid[startY].findIndex((cell) => cell === "S");
 async function dfs(x, y, depth, path) {
 
   if (grid[y][x] === "S" && depth > 0) {
-    console.log("found at " + depth);
     return [depth + 1, path];
   }
 
@@ -111,7 +110,26 @@ async function dfs(x, y, depth, path) {
   return [maxDepth, maxPath];
 }
 
-const width = grid[0].length;
+function getPathChar(x, y) {
+  switch (grid[y][x]) {
+    case "L":
+      return "╚"
+    case "J":
+      return "╝"
+    case "7":
+      return "╗"
+    case "F":
+      return "╔"
+    case "S":
+    case "|":
+      return "║"
+    case "-":
+      return "═"
+    default:
+      return " ";
+  }
+}
+
 function getNeighborsNoRestrictions(x, y) {
   const neighbors = [];
 
@@ -141,8 +159,8 @@ async function main() {
 
   const [depth, path] = loop;
 
-
   const pathElements = path.split("->");
+
 
   //make a grid matching the size of the input
   const grid2 = [];
@@ -228,61 +246,55 @@ async function main() {
             upwalls++;
             downwalls++;
           }
-          if (gridElem === "L" || gridElem === "J") upwalls++;
-          if (gridElem === "7" || gridElem === "F") downwalls++;
-          
+          if (gridElem === "L" || gridElem === "J") {
+            upwalls++;
+          }
+          if (gridElem === "7" || gridElem === "F") {
+            downwalls++;
+          }
+
         }
+
         //if either up or down walls is 0, its not valid
         if (upwalls === 0 || downwalls === 0) {
           isValid = false;
-          grid2[y][x] = 5;
         }
+
         else if (downwalls % 2 != 1 || upwalls % 2 != 1) {
           isValid = false;
-          grid2[y][x] = 6;
         }
 
         if (isValid) {
           ValidCoors.push({ x, y });
           grid2[y][x] = 3;
           area++;
+        } else {
+          grid2[y][x] = 6;
+
         }
       }
     }
   }
-
-  console.log(area);
 
 
   //print the grid
   for (let y = 0; y < grid2.length; y++) {
     let row = "";
     for (let x = 0; x < grid2[y].length; x++) {
-      if (grid2[y][x] === 0) {
-        row += "\x1b[33m0\x1b[0m"
-      }
       if (grid2[y][x] === 1) {
-        row += grid[y][x];
+        row += getPathChar(x, y);
       }
-      if (grid2[y][x] === 2) {
-        row += " ";
+      else if (grid2[y][x] === 3) {
+        //make this green
+        row += "\x1b[32m▓\x1b[0m";
       }
-      if (grid2[y][x] === 3) {
-        //make this yellow
-        row += "\x1b[33m3\x1b[0m";
-      }
-      if (grid2[y][x] === 5) {
-        //make thisgreen
-        row += "\x1b[32m5\x1b[0m";
-      }
-      if (grid2[y][x] === 6) {
+      else {
         //make this red
-        row += "\x1b[31m6\x1b[0m";
+        row += "\x1b[31m╳\x1b[0m";
       }
     }
     console.log(row);
   }
-
 
 }
 
