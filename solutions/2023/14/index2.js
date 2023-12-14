@@ -149,14 +149,11 @@ for (let i = 0; i < 1000000000; i++) {
 
   const hash = hashGrid(grid);
   if (seenStorage.has(hash)) {
-    console.log("Found a loop!");
     const loopOrigin = seenStorageMap.get(hash);
     const loopLength = i - loopOrigin;
 
     const remaining = 1000000000 - 1 - i;
     const remainingMod = remaining % loopLength;
-
-    console.log(loopOrigin, loopLength, remaining, remainingMod);
 
     for (let j = 0; j < remainingMod; j++) {
       performCycle(grid);
@@ -182,4 +179,4 @@ for (let i = 0; i < 1000000000; i++) {
   seenStorageMap.set(hash, i);
 }
 
-console.log(grid.map(row => row.join("")).join("\n"));
+console.log("Uh-oh, we shouldn't be here!");
