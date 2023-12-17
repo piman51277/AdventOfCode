@@ -9,8 +9,8 @@ using namespace std;
 using std::cout;
 
 // in this case, our input size is known
-constexpr int WIDTH = 440;
-constexpr int HEIGHT = 440;
+constexpr int WIDTH = 880;
+constexpr int HEIGHT = 880;
 
 constexpr int GRID_SIZE = WIDTH * HEIGHT;
 
@@ -44,14 +44,14 @@ struct Beam
 int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen)
 {
   // queue of beams to process
-  queue<Beam> q;
-  q.push(b);
+  deque<Beam> q;
+  q.push_back(b);
 
   while (q.size() > 0)
   {
 
     const Beam &b = q.front();
-    q.pop();
+    q.pop_front();
 
     const uint16_t &x = b.x;
     const uint16_t &y = b.y;
@@ -67,28 +67,25 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen)
       {
         int loc = i * WIDTH + x;
         energized[loc] = 1;
-
-        if (grid[loc] == 1)
+        switch (grid[loc])
         {
+        case 1:
           if (x < WIDTH - 1)
             nextFirst = {x + 1, i, 1};
-        }
-        else if (grid[loc] == 2)
-        {
+          break;
+        case 2:
           if (x > 0)
-
             nextFirst = {x - 1, i, 3};
-        }
-        else if (grid[loc] == 4)
-        {
+          break;
+        case 4:
           if (x < WIDTH - 1)
             nextFirst = {x + 1, i, 1};
           if (x > 0)
             nextSecond = {x - 1, i, 3};
-        }
-        else
-        {
+          break;
+        default:
           continue;
+          break;
         }
         break;
       }
@@ -101,27 +98,25 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen)
       {
         int loc = i * WIDTH + x;
         energized[loc] = 1;
-
-        if (grid[loc] == 1)
+        switch (grid[loc])
         {
+        case 1:
           if (x > 0)
             nextFirst = {x - 1, i, 3};
-        }
-        else if (grid[loc] == 2)
-        {
+          break;
+        case 2:
           if (x < WIDTH - 1)
             nextFirst = {x + 1, i, 1};
-        }
-        else if (grid[loc] == 4)
-        {
+          break;
+        case 4:
           if (x > 0)
             nextFirst = {x - 1, i, 3};
           if (x < WIDTH - 1)
             nextSecond = {x + 1, i, 1};
-        }
-        else
-        {
+          break;
+        default:
           continue;
+          break;
         }
         break;
       }
@@ -134,60 +129,57 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen)
       {
         int loc = y * WIDTH + i;
         energized[loc] = 1;
-
-        if (grid[loc] == 1)
+        switch (grid[loc])
         {
+        case 1:
           if (y > 0)
             nextFirst = {i, y - 1, 0};
-        }
-        else if (grid[loc] == 2)
-        {
+          break;
+        case 2:
           if (y < HEIGHT - 1)
             nextFirst = {i, y + 1, 2};
-        }
-        else if (grid[loc] == 3)
-        {
+          break;
+        case 3:
           if (y > 0)
             nextFirst = {i, y - 1, 0};
           if (y < HEIGHT - 1)
             nextSecond = {i, y + 1, 2};
-        }
-        else
-        {
+          break;
+        default:
           continue;
+          break;
         }
         break;
       }
     }
 
     // left
-    else if (dir == 3)
+    else
     {
       for (int i = x; i >= 0; --i)
       {
         int loc = y * WIDTH + i;
         energized[loc] = 1;
 
-        if (grid[loc] == 1)
+        switch (grid[loc])
         {
+        case 1:
           if (y < HEIGHT - 1)
             nextFirst = {i, y + 1, 2};
-        }
-        else if (grid[loc] == 2)
-        {
+          break;
+        case 2:
           if (y > 0)
             nextFirst = {i, y - 1, 0};
-        }
-        else if (grid[loc] == 3)
-        {
+          break;
+        case 3:
           if (y > 0)
             nextFirst = {i, y - 1, 0};
           if (y < HEIGHT - 1)
             nextSecond = {i, y + 1, 2};
-        }
-        else
-        {
+          break;
+        default:
           continue;
+          break;
         }
         break;
       }
@@ -196,22 +188,22 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen)
     // add next beams to queue
     if (nextFirst.dir != 5)
     {
-      int offset = nextFirst.offset();
+      int sOffset = nextFirst.y * WIDTH + nextFirst.x;
 
-      if (seen[offset] == 0)
+      if (!(seen[sOffset] & (1 << nextFirst.dir)))
       {
-        seen[offset] = 1;
-        q.push(nextFirst);
+        seen[sOffset] |= (1 << nextFirst.dir);
+        q.push_back(nextFirst);
       }
     }
     if (nextSecond.dir != 5)
     {
-      int offset = nextSecond.offset();
+      int sOffset = nextSecond.y * WIDTH + nextSecond.x;
 
-      if (seen[offset] == 0)
+      if (!(seen[sOffset] & (1 << nextSecond.dir)))
       {
-        seen[offset] = 1;
-        q.push(nextSecond);
+        seen[sOffset] |= (1 << nextSecond.dir);
+        q.push_back(nextSecond);
       }
     }
   }
@@ -231,13 +223,13 @@ void threadScan(Beam *scanPositions, uint8_t *grid, int start, int end, int *max
   uint8_t energized[GRID_SIZE];
 
   // array that stores whether or not we've seen a certain beam
-  uint8_t seen[GRID_SIZE * 4];
+  uint8_t seen[GRID_SIZE];
 
   int locMax = -1;
   for (int i = start; i < end; ++i)
   {
     fill(energized, energized + GRID_SIZE, 0);
-    fill(seen, seen + GRID_SIZE * 4, 0);
+    fill(seen, seen + GRID_SIZE, 0);
     int count = scanFromBeam(scanPositions[i], grid, energized, seen);
     if (count > locMax)
     {
