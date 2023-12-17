@@ -2,24 +2,21 @@
 #include <string>
 #include <vector>
 #include <queue>
+#include <fstream>
 #include <thread>
 
 using namespace std;
 using std::cout;
 
 // in this case, our input size is known
-constexpr int WIDTH = 110;
-constexpr int HEIGHT = 110;
+constexpr int WIDTH = 440;
+constexpr int HEIGHT = 440;
 
 constexpr int GRID_SIZE = WIDTH * HEIGHT;
 
-// we know roughly 12% of the grid will be filled with non spaces.
-// Allocate 15% to be safe
-constexpr int MAX_MIRRORS = WIDTH * HEIGHT * 0.15;
-
 constexpr int SCAN_MAX = (WIDTH + HEIGHT) * 2;
 
-constexpr int THREAD_COUNT = 20;
+constexpr int THREAD_COUNT = 22;
 constexpr int BLOCK_SIZE = SCAN_MAX / THREAD_COUNT;
 
 // direction enum
@@ -32,9 +29,9 @@ struct Beam
 {
   uint16_t x;
   uint16_t y;
-  uint16_t dir;
+  uint8_t dir;
 
-  Beam(uint16_t x, uint16_t y, uint16_t dir) : x(x), y(y), dir(dir) {}
+  Beam(uint16_t x, uint16_t y, uint8_t dir) : x(x), y(y), dir(dir) {}
 
   Beam() : x(0), y(0), dir(0) {}
 
@@ -44,14 +41,7 @@ struct Beam
   }
 };
 
-struct BeamEntry
-{
-  int child1;
-  int child2;
-  int energizedTiles[WIDTH];
-};
-
-int scanFromBeam(Beam b, uint16_t *grid, uint16_t *energized, uint16_t *seen)
+int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen)
 {
   // queue of beams to process
   queue<Beam> q;
@@ -59,15 +49,16 @@ int scanFromBeam(Beam b, uint16_t *grid, uint16_t *energized, uint16_t *seen)
 
   while (q.size() > 0)
   {
+
     const Beam &b = q.front();
     q.pop();
 
     const uint16_t &x = b.x;
     const uint16_t &y = b.y;
-    const uint16_t &dir = b.dir;
+    const uint8_t &dir = b.dir;
 
-    vector<Beam> next;
-    next.reserve(100);
+    Beam nextFirst = {0, 0, 5}; // no direction 5 exists
+    Beam nextSecond = {0, 0, 5};
 
     // up
     if (dir == 0)
@@ -80,19 +71,20 @@ int scanFromBeam(Beam b, uint16_t *grid, uint16_t *energized, uint16_t *seen)
         if (grid[loc] == 1)
         {
           if (x < WIDTH - 1)
-            next.emplace_back(x + 1, i, 1);
+            nextFirst = {x + 1, i, 1};
         }
         else if (grid[loc] == 2)
         {
           if (x > 0)
-            next.emplace_back(x - 1, i, 3);
+
+            nextFirst = {x - 1, i, 3};
         }
         else if (grid[loc] == 4)
         {
           if (x < WIDTH - 1)
-            next.emplace_back(x + 1, i, 1);
+            nextFirst = {x + 1, i, 1};
           if (x > 0)
-            next.emplace_back(x - 1, i, 3);
+            nextSecond = {x - 1, i, 3};
         }
         else
         {
@@ -113,19 +105,19 @@ int scanFromBeam(Beam b, uint16_t *grid, uint16_t *energized, uint16_t *seen)
         if (grid[loc] == 1)
         {
           if (x > 0)
-            next.emplace_back(x - 1, i, 3);
+            nextFirst = {x - 1, i, 3};
         }
         else if (grid[loc] == 2)
         {
           if (x < WIDTH - 1)
-            next.emplace_back(x + 1, i, 1);
+            nextFirst = {x + 1, i, 1};
         }
         else if (grid[loc] == 4)
         {
           if (x > 0)
-            next.emplace_back(x - 1, i, 3);
+            nextFirst = {x - 1, i, 3};
           if (x < WIDTH - 1)
-            next.emplace_back(x + 1, i, 1);
+            nextSecond = {x + 1, i, 1};
         }
         else
         {
@@ -146,19 +138,19 @@ int scanFromBeam(Beam b, uint16_t *grid, uint16_t *energized, uint16_t *seen)
         if (grid[loc] == 1)
         {
           if (y > 0)
-            next.emplace_back(i, y - 1, 0);
+            nextFirst = {i, y - 1, 0};
         }
         else if (grid[loc] == 2)
         {
           if (y < HEIGHT - 1)
-            next.emplace_back(i, y + 1, 2);
+            nextFirst = {i, y + 1, 2};
         }
         else if (grid[loc] == 3)
         {
           if (y > 0)
-            next.emplace_back(i, y - 1, 0);
+            nextFirst = {i, y - 1, 0};
           if (y < HEIGHT - 1)
-            next.emplace_back(i, y + 1, 2);
+            nextSecond = {i, y + 1, 2};
         }
         else
         {
@@ -179,19 +171,19 @@ int scanFromBeam(Beam b, uint16_t *grid, uint16_t *energized, uint16_t *seen)
         if (grid[loc] == 1)
         {
           if (y < HEIGHT - 1)
-            next.emplace_back(i, y + 1, 2);
+            nextFirst = {i, y + 1, 2};
         }
         else if (grid[loc] == 2)
         {
           if (y > 0)
-            next.emplace_back(i, y - 1, 0);
+            nextFirst = {i, y - 1, 0};
         }
         else if (grid[loc] == 3)
         {
           if (y > 0)
-            next.emplace_back(i, y - 1, 0);
+            nextFirst = {i, y - 1, 0};
           if (y < HEIGHT - 1)
-            next.emplace_back(i, y + 1, 2);
+            nextSecond = {i, y + 1, 2};
         }
         else
         {
@@ -202,14 +194,24 @@ int scanFromBeam(Beam b, uint16_t *grid, uint16_t *energized, uint16_t *seen)
     }
 
     // add next beams to queue
-    for (const Beam &b : next)
+    if (nextFirst.dir != 5)
     {
-      int offset = b.offset();
+      int offset = nextFirst.offset();
 
       if (seen[offset] == 0)
       {
         seen[offset] = 1;
-        q.push(b);
+        q.push(nextFirst);
+      }
+    }
+    if (nextSecond.dir != 5)
+    {
+      int offset = nextSecond.offset();
+
+      if (seen[offset] == 0)
+      {
+        seen[offset] = 1;
+        q.push(nextSecond);
       }
     }
   }
@@ -217,73 +219,75 @@ int scanFromBeam(Beam b, uint16_t *grid, uint16_t *energized, uint16_t *seen)
   int count = 0;
   for (int i = 0; i < GRID_SIZE; ++i)
   {
-    if (energized[i] == 1)
-    {
-      ++count;
-    }
+    count += energized[i];
   }
 
   return count;
 }
 
-void threadScan(Beam *scanPositions, uint16_t *grid, int start, int end, int *max)
+void threadScan(Beam *scanPositions, uint8_t *grid, int start, int end, int *max)
 {
-
   // a copy of the grid that stores on/off
-  uint16_t energized[GRID_SIZE];
+  uint8_t energized[GRID_SIZE];
 
   // array that stores whether or not we've seen a certain beam
-  uint16_t seen[GRID_SIZE * 4];
+  uint8_t seen[GRID_SIZE * 4];
 
+  int locMax = -1;
   for (int i = start; i < end; ++i)
   {
     fill(energized, energized + GRID_SIZE, 0);
     fill(seen, seen + GRID_SIZE * 4, 0);
     int count = scanFromBeam(scanPositions[i], grid, energized, seen);
-    if (count > *max)
+    if (count > locMax)
     {
-      *max = count;
+      locMax = count;
     }
   }
+  *max = locMax;
 }
-
 int main()
 {
-  uint16_t grid[GRID_SIZE];
+
+  uint8_t grid[GRID_SIZE];
 
   // initialize grid
-  int no = 0;
+  ifstream infile("input.txt");
+
+  char buffer[(WIDTH + 1) * HEIGHT];
+  infile.read(buffer, (WIDTH + 1) * HEIGHT);
+
+  int fileInd = 0;
+  int gridInd = 0;
   for (int y = 0; y < HEIGHT; ++y)
   {
-    string line;
-    cin >> line;
     int offset = y * WIDTH;
     for (int x = 0; x < WIDTH; ++x)
     {
-      char c = line[x];
+      char c = buffer[fileInd++];
       switch (c)
       {
       case '.':
-        grid[offset + x] = 0;
-        no++;
+        grid[gridInd++] = 0;
         break;
       case '/':
-        grid[offset + x] = 1;
+        grid[gridInd++] = 1;
         break;
       case '\\':
-        grid[offset + x] = 2;
+        grid[gridInd++] = 2;
         break;
       case '|':
-        grid[offset + x] = 3;
+        grid[gridInd++] = 3;
         break;
       case '-':
-        grid[offset + x] = 4;
+        grid[gridInd++] = 4;
         break;
       default:
-        grid[offset + x] = 0;
+        grid[gridInd++] = 0;
         break;
       };
     }
+    ++fileInd;
   }
 
   // all the positions to scan
@@ -326,7 +330,7 @@ int main()
     threads[i] = thread(threadScan, scanPositions, grid, i * BLOCK_SIZE, (i + 1) * BLOCK_SIZE, &max[i]);
   }
 
-  // join the threads
+  // wait for the threads to finish
   for (int i = 0; i < THREAD_COUNT; ++i)
   {
     threads[i].join();
