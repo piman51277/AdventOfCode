@@ -3,6 +3,7 @@
 #include <vector>
 #include <deque>
 #include <fstream>
+
 using namespace std;
 using std::cout;
 
@@ -13,9 +14,6 @@ constexpr int HEIGHT = 440;
 constexpr int GRID_SIZE = WIDTH * HEIGHT;
 
 constexpr int SCAN_MAX = (WIDTH + HEIGHT) * 2;
-
-// tune this to get the best performance (lower is faster)
-constexpr int BEAM_MAX = (float)GRID_SIZE * 0.05 * 4 + SCAN_MAX;
 
 // direction enum
 //  0 = up
@@ -32,18 +30,24 @@ struct Beam
   Beam(uint16_t x, uint16_t y, uint8_t dir) : x(x), y(y), dir(dir) {}
 
   Beam() : x(0), y(0), dir(0) {}
+
+  int offset() const
+  {
+    return (y * WIDTH + x) * 4 + dir;
+  }
 };
 
 struct BeamEntry
 {
   Beam child1;
   Beam child2;
-  int32_t energizedEnd;
+  uint32_t energizedBegin;
+  uint32_t energizedEnd;
 
-  BeamEntry() : child1(0, 0, 0), child2(0, 0, 0), energizedEnd(-1) {}
+  BeamEntry() : child1(), child2(), energizedBegin(-1), energizedEnd(-1) {}
 };
 
-int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen, int32_t *beamIndex, BeamEntry *beamCache, int32_t *nextIndex)
+int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen)
 {
   // queue of beams to process
   deque<Beam> q;
@@ -51,6 +55,7 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen, int32
 
   while (q.size() > 0)
   {
+
     const Beam &b = q.front();
     q.pop_front();
 
@@ -58,86 +63,16 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen, int32
     const uint16_t &y = b.y;
     const uint8_t &dir = b.dir;
 
-    // cache hit
-    uint32_t sOffset = y * WIDTH + x;
-    uint32_t offset = (sOffset) * 4 + dir;
-    int32_t cIndex = beamIndex[offset];
-    if (cIndex != -1)
-    {
-
-      const BeamEntry &be = beamCache[cIndex];
-
-      // add children
-      Beam c1 = be.child1;
-      Beam c2 = be.child2;
-
-      if (c1.dir != 5)
-      {
-        uint32_t c1SOffset = c1.y * WIDTH + c1.x;
-        if (!(seen[c1SOffset] & (1 << c1.dir)))
-        {
-          seen[c1SOffset] |= (1 << c1.dir);
-          q.push_back(c1);
-        }
-      }
-
-      if (c2.dir != 5)
-      {
-        uint32_t c2SOffset = c2.y * WIDTH + c2.x;
-        if (!(seen[c2SOffset] & (1 << c2.dir)))
-        {
-          seen[c2SOffset] |= (1 << c2.dir);
-          q.push_back(c2);
-        }
-      }
-
-      // add energized
-      int32_t eBegin = sOffset;
-      int32_t eEnd = be.energizedEnd;
-
-      switch (dir)
-      {
-      case 0:
-        for (int32_t i = eEnd; i <= eBegin; i += WIDTH)
-        {
-          energized[i] = 1;
-        }
-        break;
-      case 1:
-        for (int32_t i = eBegin; i <= eEnd; i++)
-        {
-          energized[i] = 1;
-        }
-        break;
-      case 2:
-        for (int32_t i = eBegin; i <= eEnd; i += WIDTH)
-        {
-          energized[i] = 1;
-        }
-        break;
-      case 3:
-        for (int32_t i = eEnd; i <= eBegin; i++)
-        {
-          energized[i] = 1;
-        }
-        break;
-      }
-
-      continue;
-    }
     Beam nextFirst = {0, 0, 5}; // no direction 5 exists
     Beam nextSecond = {0, 0, 5};
-
-    uint32_t energizedEnd = sOffset;
 
     // up
     if (dir == 0)
     {
-      for (int16_t i = y; i >= 0; --i)
+      for (int i = y; i >= 0; --i)
       {
         int loc = i * WIDTH + x;
         energized[loc] = 1;
-        energizedEnd = loc;
         switch (grid[loc])
         {
         case 1:
@@ -165,11 +100,10 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen, int32
     // down
     else if (dir == 2)
     {
-      for (uint16_t i = y; i < HEIGHT; ++i)
+      for (int i = y; i < HEIGHT; ++i)
       {
         int loc = i * WIDTH + x;
         energized[loc] = 1;
-        energizedEnd = loc;
         switch (grid[loc])
         {
         case 1:
@@ -197,11 +131,10 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen, int32
     // right
     else if (dir == 1)
     {
-      for (uint16_t i = x; i < WIDTH; ++i)
+      for (int i = x; i < WIDTH; ++i)
       {
         int loc = y * WIDTH + i;
         energized[loc] = 1;
-        energizedEnd = loc;
         switch (grid[loc])
         {
         case 1:
@@ -229,11 +162,11 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen, int32
     // left
     else
     {
-      for (int16_t i = x; i >= 0; --i)
+      for (int i = x; i >= 0; --i)
       {
         int loc = y * WIDTH + i;
         energized[loc] = 1;
-        energizedEnd = loc;
+
         switch (grid[loc])
         {
         case 1:
@@ -261,7 +194,7 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen, int32
     // add next beams to queue
     if (nextFirst.dir != 5)
     {
-      uint32_t sOffset = nextFirst.y * WIDTH + nextFirst.x;
+      int sOffset = nextFirst.y * WIDTH + nextFirst.x;
 
       if (!(seen[sOffset] & (1 << nextFirst.dir)))
       {
@@ -271,7 +204,7 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen, int32
     }
     if (nextSecond.dir != 5)
     {
-      uint32_t sOffset = nextSecond.y * WIDTH + nextSecond.x;
+      int sOffset = nextSecond.y * WIDTH + nextSecond.x;
 
       if (!(seen[sOffset] & (1 << nextSecond.dir)))
       {
@@ -279,23 +212,6 @@ int scanFromBeam(Beam b, uint8_t *grid, uint8_t *energized, uint8_t *seen, int32
         q.push_back(nextSecond);
       }
     }
-
-    // is there room?
-    uint32_t index = (*nextIndex)++;
-    if (index >= BEAM_MAX)
-    {
-      cout << "Ran out of space in beam cache" << endl;
-      exit(1);
-    }
-
-    // add beam to cache
-    BeamEntry &be = beamCache[index];
-    be.child1 = nextFirst;
-    be.child2 = nextSecond;
-    be.energizedEnd = energizedEnd;
-
-    // write to index
-    beamIndex[offset] = index;
   }
 
   int count = 0;
@@ -378,18 +294,6 @@ int main()
     scanPositions[HEIGHT * 2 + WIDTH + i] = {i, HEIGHT - 1, 0};
   }
 
-  // beam index for each position
-  // we use heap because this gets very large
-  int32_t *beamIndex = new int32_t[GRID_SIZE * 4];
-  fill(beamIndex, beamIndex + GRID_SIZE * 4, -1);
-
-  // the cache of beams
-  BeamEntry *beams = new BeamEntry[BEAM_MAX];
-  fill(beams, beams + BEAM_MAX, BeamEntry());
-
-  // the next available index
-  int32_t *nextIndex = new int32_t(0);
-
   // find the max
   uint8_t energized[GRID_SIZE];
   uint8_t seen[GRID_SIZE];
@@ -400,7 +304,7 @@ int main()
     fill(energized, energized + GRID_SIZE, 0);
     fill(seen, seen + GRID_SIZE, 0);
 
-    int count = scanFromBeam(scanPositions[i], grid, energized, seen, beamIndex, beams, nextIndex);
+    int count = scanFromBeam(scanPositions[i], grid, energized, seen);
     if (count > maxV)
     {
       maxV = count;
