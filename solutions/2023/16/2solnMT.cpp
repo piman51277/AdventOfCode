@@ -9,8 +9,8 @@ using namespace std;
 using std::cout;
 
 // in this case, our input size is known
-constexpr int WIDTH = 880;
-constexpr int HEIGHT = 880;
+constexpr int WIDTH = 110;
+constexpr int HEIGHT = 110;
 
 constexpr int GRID_SIZE = WIDTH * HEIGHT;
 
