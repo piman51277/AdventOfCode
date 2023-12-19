@@ -47,113 +47,37 @@ const parts = sections[1].split("\n").map(line => {
 
 parts.pop();
 
-function meetsCond(test, op, value) {
-  switch (op) {
-    case "<": return test < value;
-    case ">": return test > value;
-  }
-  return false;
-}
-
 
 function processPart(part) {
-  const { x, m, a, s } = part;
-
   //get the first workflow
   let workflow = workflows["in"];
-
   while (true) {
     //start looping through the workflow
     for (const rule of workflow) {
       const { cat, op, value, next } = rule;
 
       if (cat == "R") {
-        if (next == "R") {
-          return false;
+        if (next == "R" || next == "A") {
+          return next == "A";
         }
-        else if (next == "A") {
-          return true;
-        }
-        console.log("jumping to", next);
         workflow = workflows[next];
         break;
       }
 
-      if (cat == "x") {
-        if (meetsCond(x, op, value)) {
-          if (next == "R") {
-            return false;
-          }
-          else if (next == "A") {
-            return true;
-          }
-          else {
-
-            console.log("jumping to", next);
-            workflow = workflows[next];
-            break;
-          }
+      if (eval(`${part[cat]} ${op} ${value}`)) {
+        if (next == "R" || next == "A") {
+          return next == "A";
         }
-      }
-      else if (cat == "m") {
-        if (meetsCond(m, op, value)) {
-          if (next == "R") {
-            return false;
-          }
-          else if (next == "A") {
-            return true;
-          }
-          else {
-
-            console.log("jumping to", next);
-            workflow = workflows[next];
-            break;
-          }
-        }
-      }
-      else if (cat == "a") {
-        if (meetsCond(a, op, value)) {
-          if (next == "R") {
-            return false;
-          }
-          else if (next == "A") {
-            return true;
-          }
-          else {
-
-            console.log("jumping to", next);
-            workflow = workflows[next];
-            break;
-          }
-        }
-      }
-      else if (cat == "s") {
-        if (meetsCond(s, op, value)) {
-          if (next == "R") {
-            return false;
-          }
-          else if (next == "A") {
-            return true;
-          }
-          else {
-            console.log("jumping to", next);
-            workflow = workflows[next];
-            break;
-          }
-        }
+        workflow = workflows[next];
+        break;
       }
     }
-
-    //console.log("error");
-
   }
 }
 
 let sum = 0;
 for (const part of parts) {
-  const result = processPart(part);
-
-  if (result) {
+  if (processPart(part)) {
     sum += part.x + part.m + part.a + part.s;
   }
 }
