@@ -145,6 +145,11 @@ for (let i = 0; i < 10000; i++) {
     }
   }
 
+  //if all cycles are found, stop
+  if (cycle.every(x => x != 0)) {
+    break;
+  }
+
 }
 
 //lcm the cycles
