@@ -42,8 +42,6 @@ for (const line of input) {
     let newEntries = entries.slice();
     newEntries.splice(i, 1);
 
-    console.log(newEntries);
-
     if (isOK(newEntries)) {
       ok++;
       break;
