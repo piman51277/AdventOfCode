@@ -108,7 +108,7 @@ async function main() {
   //create the two solution files
 
   //make the solution files
-  const lines = `const fs = require("fs");\nconst input = fs.readFileSync("input.txt", "utf8").split("\\n");\ninput.pop()`;
+  const lines = `const fs = require("fs");\nconst input = fs.readFileSync("input.txt", "utf8").split("\\n");\ninput.pop();\nfor (const line of input) {\n    }\n`;
 
   //create the part 1 solution file
   fs.writeFileSync(path.join(solutionPath, "index.js"), lines);
