@@ -1,38 +1,137 @@
 const fs = require("fs");
-const input = fs.readFileSync("input.txt", "utf8").trim().split("\n");
-const grid = input.map((line) => line.split(""));
-const height = grid.length;
-const width = grid[0].length;
+let [gridRaw, movements] = fs
+  .readFileSync("input.txt", "utf8")
+  .trim()
+  .split("\n\n");
 
-console.log(grid);
+movements = movements.replace(/\n/g, "").split("");
 
-/**
- * Get the value of all neighbors that meet a certain condition
- * X is COL #, Y is ROW #
- * @param {number} x - x coordinate of the cell
- * @param {number} y - y coordinate of the cell
- * @param {(x, y, value) => bool} condition - function that returns true if the cell meets the condition
- */
-function getNeighborsValueWithCondition(x, y, condition) {
-  var neighbors = [
-    //orth
-    x > 0 ? [x - 1, y, grid[y][x - 1]] : null,
-    x < grid[0].length - 1 ? [x + 1, y, grid[y][x + 1]] : null,
-    y > 0 ? [x, y - 1, grid[y - 1][x]] : null,
-    y < grid.length - 1 ? [x, y + 1, grid[y + 1][x]] : null,
-    //diag
-    x > 0 && y > 0 ? [x - 1, y - 1, grid[y - 1][x - 1]] : null,
-    x > 0 && y < grid.length - 1 ? [x - 1, y + 1, grid[y + 1][x - 1]] : null,
-    x < grid[0].length - 1 && y > 0 ? [x + 1, y - 1, grid[y - 1][x + 1]] : null,
-    x < grid[0].length - 1 && y < grid.length - 1
-      ? [x + 1, y + 1, grid[y + 1][x + 1]]
-      : null,
-  ];
-  return neighbors
-    .filter((k) => k !== null && condition(k[0], k[1], k[2]))
-    .map((k) => k[2]);
+let grid = gridRaw.split("\n").map((row) => row.split(""));
+let x = 0;
+let y = 0;
+
+//look for the @
+for (let i = 0; i < grid.length; i++) {
+  for (let j = 0; j < grid[i].length; j++) {
+    if (grid[i][j] === "@") {
+      x = j;
+      y = i;
+      break;
+    }
+  }
 }
 
-console.log(
-  getNeighborsValueWithCondition(0, 14, (x, y, value) => value == "1")
-);
+for (const mov of movements) {
+  if (mov == "<") {
+    //start scanning left from the current position
+    let boxCount = 0;
+    for (let i = x - 1; i >= 0; i--) {
+      if (grid[y][i] === "#" || grid[y][i] === ".") {
+        break;
+      }
+      if (grid[y][i] === "O") {
+        boxCount++;
+      }
+    }
+
+    //look at the postion to the left of the leftmost box
+    const posX = x - boxCount - 1;
+    const posY = y;
+
+    //if the position is empty, move the player and the boxes
+    if (grid[posY][posX] === ".") {
+      grid[y][x] = ".";
+      grid[posY][posX] = "O";
+      grid[y][x - 1] = "@";
+      x--;
+    }
+  } else if (mov == ">") {
+    //start scanning right from the current position
+    let boxCount = 0;
+    for (let i = x + 1; i < grid[y].length; i++) {
+      if (grid[y][i] === "#" || grid[y][i] === ".") {
+        break;
+      }
+      if (grid[y][i] === "O") {
+        boxCount++;
+      }
+    }
+
+    const posX = x + boxCount + 1;
+    const posY = y;
+
+    //if the position is empty, move the player and the boxes
+    if (grid[posY][posX] === ".") {
+      grid[y][x] = ".";
+      grid[posY][posX] = "O";
+      grid[y][x + 1] = "@";
+      x++;
+    }
+  } else if (mov == "^") {
+    //start scanning up from the current position
+    let boxCount = 0;
+    for (let i = y - 1; i >= 0; i--) {
+      if (grid[i][x] === "#" || grid[i][x] === ".") {
+        break;
+      }
+      if (grid[i][x] === "O") {
+        boxCount++;
+      }
+    }
+
+    const posX = x;
+    const posY = y - boxCount - 1;
+
+    //if the position is empty, move the player and the boxes
+    if (grid[posY][posX] === ".") {
+      grid[y][x] = ".";
+
+      grid[posY][posX] = "O";
+      grid[y - 1][x] = "@";
+      y--;
+    }
+  } else {
+    let boxCount = 0;
+    for (let i = y + 1; i < grid.length; i++) {
+      if (grid[i][x] === "#" || grid[i][x] === ".") {
+        break;
+      }
+      if (grid[i][x] === "O") {
+        boxCount++;
+      }
+    }
+
+    const posX = x;
+    const posY = y + boxCount + 1;
+
+    //if the position is empty, move the player and the boxes
+    if (grid[posY][posX] === ".") {
+      grid[y][x] = ".";
+
+      grid[posY][posX] = "O";
+      grid[y + 1][x] = "@";
+      y++;
+    }
+  }
+
+  console.log(mov, x, y);
+  //print the grid
+  for (const row of grid) {
+    //console.log(row.join(""));
+  }
+}
+
+//print the grid
+for (const row of grid) {
+  console.log(row.join(""));
+}
+
+let score = 0;
+for (let y = 0; y < grid.length; y++) {
+  for (let x = 0; x < grid[y].length; x++) {
+    if (grid[y][x] === "O") {
+      score += y * 100 + x;
+    }
+  }
+}
+console.log(score);
