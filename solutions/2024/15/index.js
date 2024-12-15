@@ -114,7 +114,7 @@ for (const mov of movements) {
     }
   }
 
-  console.log(mov, x, y);
+  //console.log(mov, x, y);
   //print the grid
   for (const row of grid) {
     //console.log(row.join(""));
@@ -123,7 +123,7 @@ for (const mov of movements) {
 
 //print the grid
 for (const row of grid) {
-  console.log(row.join(""));
+  //console.log(row.join(""));
 }
 
 let score = 0;

@@ -122,7 +122,7 @@ function print() {
   console.log(doubleWideGrid.map((row) => row.join("")).join("\n"));
 }
 
-print();
+//print();
 
 for (const mov of movements) {
   const newPosition = {
@@ -146,7 +146,7 @@ for (const mov of movements) {
   }
 
   if (doesWallsCollide) {
-    console.log("wall collision");
+    //console.log("wall collision");
     continue;
   }
 
@@ -169,7 +169,7 @@ for (const mov of movements) {
   //if there isn't a box, just move and continue
   if (!collidedBox) {
     playerPos = newPosition;
-    console.log("player moved");
+    //console.log("player moved");
     continue;
   }
 
