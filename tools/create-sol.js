@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -123,16 +124,16 @@ async function main() {
 
   //ask if we should grab the input as well
   const doGrabInput = await confirm("Grab input? (y/n) ");
-  if (!doGrabInput) {
-    console.log("Aborting");
-    process.exit(0);
+  if (doGrabInput) {
+    //get the input
+    const input = await getInput(year, day);
+
+    //write the input to the file
+    fs.writeFileSync(path.join(solutionPath, "input.txt"), input);
   }
 
-  //get the input
-  const input = await getInput(year, day);
-
-  //write the input to the file
-  fs.writeFileSync(path.join(solutionPath, "input.txt"), input);
+  //automatically open the solution directory
+  exec(`code ${solutionPath} -r`);
 
   //close the readline interface, we don't need it anymore
   rl.close();
