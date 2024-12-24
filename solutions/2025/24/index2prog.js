@@ -170,6 +170,13 @@ for (const gate of checkNext) {
   flags.add(correctOutput);
 }
 
+//if there isn't exactly 8 flags, this solver isn't complex enough to solve this
+if (flags.size != 8) {
+  throw new Error(
+    "Critical Error! This solver isn't complex enough to solve this"
+  );
+}
+
 const flagsArr = [...flags];
 flagsArr.sort((a, b) => a.localeCompare(b));
 console.log(flagsArr.join(","));
