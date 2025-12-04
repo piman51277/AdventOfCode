@@ -22,11 +22,12 @@ function getCanRemoved() {
   let canRemove = [];
   for (let i = 0; i < height; i++) {
     for (let j = 0; j < width; j++) {
-      //less than 4 neighbors that are @
-      const neighbors = getNeighborsValue(i, j);
-      const atCount = neighbors.filter((k) => k === "@").length;
-      if (atCount < 4 && grid[i][j] === "@") {
-        canRemove.push([i, j]);
+      if (grid[i][j] === "@") {
+        const neighbors = getNeighborsValue(i, j);
+        const atCount = neighbors.filter((k) => k === "@").length;
+        if (atCount < 4) {
+          canRemove.push([i, j]);
+        }
       }
     }
   }
@@ -36,9 +37,6 @@ function getCanRemoved() {
 let removed = 0;
 while (true) {
   const canRemove = getCanRemoved();
-
-  // if we can't remove any more, break
-  //set all of the canRemove to .
   if (canRemove.length === 0) {
     break;
   }

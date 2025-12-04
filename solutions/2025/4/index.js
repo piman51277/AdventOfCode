@@ -19,19 +19,15 @@ function getNeighborsValue(x, y) {
 }
 
 let count = 0;
-let debugGrid = "";
 for (let i = 0; i < height; i++) {
   for (let j = 0; j < width; j++) {
-    //less than 4 neighbors that are @
-    const neighbors = getNeighborsValue(i, j);
-    const atCount = neighbors.filter((k) => k === "@").length;
-    if (atCount < 4 && grid[i][j] === "@") {
-      count++;
-      debugGrid += "X";
-    } else {
-      debugGrid += grid[i][j];
+    if (grid[i][j] === "@") {
+      const neighbors = getNeighborsValue(i, j);
+      const atCount = neighbors.filter((k) => k === "@").length;
+      if (atCount < 4) {
+        count++;
+      }
     }
   }
-  debugGrid += "\n";
 }
 console.log(count);
