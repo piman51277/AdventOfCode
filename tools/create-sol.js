@@ -133,7 +133,7 @@ async function main() {
   }
 
   //automatically open the solution directory
-  exec(`code ${solutionPath} -r`);
+  exec(`code ${solutionPath}`);
 
   //close the readline interface, we don't need it anymore
   rl.close();
