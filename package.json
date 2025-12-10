@@ -1,0 +1,9 @@
+{
+  "name": "adventofcode",
+  "version": "1.0.0",
+  "description": "My solutions for Advent of Code. The first year I started competing for global leaderboard was 2022.",
+  "author": "piman51277",
+  "dependencies": {
+    "z3-solver": "^4.15.4"
+  }
+}
